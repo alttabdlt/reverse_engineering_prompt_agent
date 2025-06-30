@@ -238,6 +238,10 @@ Response:
 
 ## 🚨 Recent Updates
 
+- **Fixed environment loading issues** (June 30, 2024)
+  - .env now loads correctly when running from part1/ directory
+  - Created symlink to ensure environment variables are found
+  - Fixed ValidationResult model compatibility with enhanced scoring
 - **Fixed Cohere API compatibility** for v5.15.0
   - Removed invalid model parameter from legacy generate()
   - Added 30s timeout to prevent long waits
