@@ -245,6 +245,7 @@ Response:
 - **Fixed Cohere API compatibility** for v5.15.0
   - Removed invalid model parameter from legacy generate()
   - Added 30s timeout to prevent long waits
+  - Fixed embed API warnings by using proper instance checking for Client type detection
   - See [COHERE_TROUBLESHOOTING.md](COHERE_TROUBLESHOOTING.md) for details
 - **Added interactive demo** for hands-on testing
 - **Improved error handling** and fallback mechanisms

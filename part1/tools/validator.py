@@ -140,7 +140,8 @@ class CohereValidator(Tool):
             
         try:
             # Check if using ClientV2 or legacy Client
-            if hasattr(cohere, 'ClientV2') and isinstance(self.client, cohere.ClientV2):
+            # Use actual instance check since we might have legacy Client even if ClientV2 exists  
+            if hasattr(self.client, '__class__') and self.client.__class__.__name__ == 'ClientV2':
                 # ClientV2 API
                 response = self.client.chat(
                     model="command-r-plus",
@@ -192,7 +193,8 @@ class CohereValidator(Tool):
             
         try:
             # Check if using ClientV2 or legacy Client
-            if hasattr(cohere, 'ClientV2') and isinstance(self.client, cohere.ClientV2):
+            # Use actual instance check since we might have legacy Client even if ClientV2 exists
+            if hasattr(self.client, '__class__') and self.client.__class__.__name__ == 'ClientV2':
                 # ClientV2 API
                 response = self.client.embed(
                     texts=[text1[:500], text2[:500]],  # Limit length

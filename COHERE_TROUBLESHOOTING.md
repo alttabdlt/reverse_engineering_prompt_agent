@@ -13,7 +13,10 @@
 ### 2. Invalid Model Parameter
 **Error**: `unknown field: parameter 'model' is not a valid field`
 
-**Solution**: This has been fixed. The legacy Cohere Client's `generate()` method doesn't need the model parameter in the same way as ClientV2.
+**Solution**: This has been fixed in two ways:
+- The legacy Cohere Client's `generate()` method doesn't need the model parameter
+- The legacy Cohere Client's `embed()` method also doesn't accept model parameter
+- Fixed instance checking to properly detect Client vs ClientV2 types
 
 ### 3. API Key Issues
 **Error**: `Invalid API key`
@@ -55,7 +58,16 @@ response = client.generate(
 # Get embeddings (no model parameter) 
 response = client.embed(
     texts=["text1", "text2"]
+    # No model, input_type, or embedding_types parameters
 )
+```
+
+**Important**: The code now properly detects Client vs ClientV2 using instance checking:
+```python
+if hasattr(self.client, '__class__') and self.client.__class__.__name__ == 'ClientV2':
+    # Use ClientV2 API with model parameter
+else:
+    # Use legacy Client API without model parameter
 ```
 
 ### Timeout Configuration
