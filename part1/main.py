@@ -14,7 +14,13 @@ from models import AnalyzeRequest, AnalyzeResponse, ErrorResponse
 from agents import PromptDetectiveAgent
 
 # Load environment variables
-load_dotenv()
+# Load .env from parent directory if running from part1/
+from pathlib import Path
+env_path = Path(__file__).parent.parent / '.env'
+if env_path.exists():
+    load_dotenv(env_path)
+else:
+    load_dotenv()  # Try current directory
 
 # Force correct credentials path
 correct_creds = "/Users/axel/Desktop/Coding-Projects/assessment/service-account-key.json"

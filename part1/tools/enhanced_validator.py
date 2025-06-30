@@ -99,20 +99,20 @@ class EnhancedValidator(Tool):
         
         if isinstance(hypothesis, PromptHypothesis):
             # Single hypothesis validation
-            result = await self._validate_with_enhanced_scoring(hypothesis, original_output)
+            result_dict = await self._validate_with_enhanced_scoring(hypothesis, original_output)
             comparison = await self._generate_comparison(hypothesis, original_output)
             
             return {
-                "validation_result": result,
+                "validation_result": result_dict["result"],
                 "comparison": comparison,
-                "enhanced_scoring": result.get("enhanced_scoring")
+                "enhanced_scoring": result_dict["enhanced_scoring"]
             }
         else:
             # Multiple hypotheses
             results = []
             for hyp in hypothesis:
-                result = await self._validate_with_enhanced_scoring(hyp, original_output)
-                results.append(result)
+                result_dict = await self._validate_with_enhanced_scoring(hyp, original_output)
+                results.append(result_dict["result"])  # Store the ValidationResult
             
             # Generate comparison for best hypothesis
             if results:
@@ -124,14 +124,14 @@ class EnhancedValidator(Tool):
             return {
                 "validation_results": results,
                 "comparison": comparison,
-                "enhanced_scoring": results[0].get("enhanced_scoring") if results else None
+                "enhanced_scoring": None  # Enhanced scoring only returned for single hypothesis
             }
     
     async def _validate_with_enhanced_scoring(
         self, 
         hypothesis: PromptHypothesis,
         original_output: str
-    ) -> ValidationResult:
+    ) -> Dict[str, Any]:
         """Validate with enhanced multi-dimensional scoring"""
         
         # Detect prompt type
@@ -240,10 +240,11 @@ class EnhancedValidator(Tool):
             confidence_calibration=confidence_calibration
         )
         
-        # Add enhanced scoring to result (extending the model)
-        result.enhanced_scoring = enhanced_scoring
-        
-        return result
+        # Return both result and enhanced scoring as a dict
+        return {
+            "result": result,
+            "enhanced_scoring": enhanced_scoring
+        }
     
     def _detect_prompt_type(self, prompt: str) -> str:
         """Detect the type of prompt for dynamic weight selection"""
