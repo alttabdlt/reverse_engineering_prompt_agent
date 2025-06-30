@@ -55,22 +55,38 @@ class PromptGenerator:
             creds_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
             creds_json = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_JSON")
             
-            if creds_path and os.path.exists(creds_path):
-                console.print(f"[dim]Using credentials from: {creds_path}[/dim]")
-                credentials = service_account.Credentials.from_service_account_file(creds_path)
-                vertexai.init(project=project_id, location=location, credentials=credentials)
+            if creds_path:
+                if os.path.exists(creds_path):
+                    console.print(f"[dim]Using credentials from: {creds_path}[/dim]")
+                    credentials = service_account.Credentials.from_service_account_file(creds_path)
+                    vertexai.init(project=project_id, location=location, credentials=credentials)
+                else:
+                    console.print(f"[red]Error: Credentials file not found at: {creds_path}[/red]")
+                    console.print("\n[yellow]To fix this, do one of the following:[/yellow]")
+                    console.print("1. Place your service account JSON at that location")
+                    console.print("2. Update GOOGLE_APPLICATION_CREDENTIALS to point to your actual key file:")
+                    console.print("   [cyan]export GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/key.json[/cyan]")
+                    console.print("3. Or set the JSON content directly:")
+                    console.print("   [cyan]export GOOGLE_APPLICATION_CREDENTIALS_JSON='$(cat /path/to/your/key.json)'[/cyan]")
+                    sys.exit(1)
             elif creds_json:
                 # Parse JSON string
                 import tempfile
-                creds_data = json.loads(creds_json)
-                with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
-                    json.dump(creds_data, f)
-                    temp_path = f.name
-                credentials = service_account.Credentials.from_service_account_file(temp_path)
-                vertexai.init(project=project_id, location=location, credentials=credentials)
-                os.unlink(temp_path)
+                try:
+                    creds_data = json.loads(creds_json)
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+                        json.dump(creds_data, f)
+                        temp_path = f.name
+                    credentials = service_account.Credentials.from_service_account_file(temp_path)
+                    vertexai.init(project=project_id, location=location, credentials=credentials)
+                    os.unlink(temp_path)
+                    console.print("[dim]Using credentials from GOOGLE_APPLICATION_CREDENTIALS_JSON[/dim]")
+                except json.JSONDecodeError:
+                    console.print("[red]Error: GOOGLE_APPLICATION_CREDENTIALS_JSON contains invalid JSON[/red]")
+                    sys.exit(1)
             else:
                 # Try default credentials
+                console.print("[dim]No explicit credentials found, trying application default credentials...[/dim]")
                 vertexai.init(project=project_id, location=location)
             
             # Initialize model
