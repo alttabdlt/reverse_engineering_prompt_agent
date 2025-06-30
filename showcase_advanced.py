@@ -95,10 +95,20 @@ async def test_advanced_case(session: aiohttp.ClientSession, test_case: Dict[str
         payload = {
             "output_text": test_case["output"],
             "max_attempts": 5,
-            "context": {"test_type": "advanced", "difficulty": test_case["difficulty"]}
+            "context": f"Advanced test case - Difficulty: {test_case['difficulty']}"
         }
         
         async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=180)) as response:
+            if response.status != 200:
+                error_text = await response.text()
+                print(f"\n❌ API Error (Status {response.status}): {error_text}")
+                return {
+                    "success": False,
+                    "test_case": test_case["name"],
+                    "error": f"API Error {response.status}: {error_text}",
+                    "processing_time": time.time() - start_time
+                }
+            
             result = await response.json()
             
         elapsed_time = time.time() - start_time
