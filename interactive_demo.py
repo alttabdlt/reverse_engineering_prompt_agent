@@ -23,7 +23,7 @@ from rich.markdown import Markdown
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)  # Override system env vars with .env file
 
 console = Console()
 

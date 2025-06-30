@@ -83,7 +83,10 @@ class EnhancedValidator(Tool):
                 self.logger.info("Cohere ClientV2 initialized for enhanced validation")
             else:
                 # Fallback to regular Client
-                self.client = cohere.Client(api_key)
+                self.client = cohere.Client(
+                    api_key,
+                    timeout=30  # 30 second timeout instead of default 120
+                )
                 self.logger.info("Cohere Client initialized for enhanced validation")
         except Exception as e:
             self.logger.warning(f"Failed to initialize Cohere: {e}, using mock mode")
@@ -611,12 +614,15 @@ class EnhancedValidator(Tool):
             else:
                 # Legacy Client API
                 response = self.client.generate(
-                    model="command",
                     prompt=prompt,
                     max_tokens=300,
-                    temperature=0.3
+                    temperature=0.3,
+                    truncate='END'
                 )
-                return response.generations[0].text.strip()
+                if hasattr(response, 'generations') and len(response.generations) > 0:
+                    return response.generations[0].text.strip()
+                else:
+                    return str(response).strip()
         except Exception as e:
             self.logger.error(f"Failed to simulate output: {str(e)}")
             return self._mock_simulate_output(prompt)
@@ -668,8 +674,8 @@ class EnhancedValidator(Tool):
             else:
                 # Legacy Client API
                 response = self.client.embed(
-                    texts=[text1[:500], text2[:500]],
-                    model='embed-english-v2.0'  # Legacy model
+                    texts=[text1[:500], text2[:500]]  # Limit length
+                    # model parameter not needed for legacy embed
                 )
                 
                 # Legacy response is just a list of embeddings
