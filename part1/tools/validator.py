@@ -136,11 +136,11 @@ class CohereValidator(Tool):
             return self._mock_simulate_output(prompt)
             
         try:
-            # Use appropriate API based on client type
-            if hasattr(self.client, 'chat'):
-                # ClientV2 or newer Client versions
+            # Check if using ClientV2 or legacy Client
+            if hasattr(cohere, 'ClientV2') and isinstance(self.client, cohere.ClientV2):
+                # ClientV2 API
                 response = self.client.chat(
-                    model="command-r-plus-08-2024",
+                    model="command-r-plus",
                     messages=[{"role": "user", "content": prompt}],
                     max_tokens=300,
                     temperature=0.3
@@ -156,7 +156,7 @@ class CohereValidator(Tool):
                 else:
                     return str(response).strip()
             else:
-                # Legacy Client
+                # Legacy Client API
                 response = self.client.generate(
                     model="command",
                     prompt=prompt,
@@ -185,27 +185,22 @@ class CohereValidator(Tool):
             return self._simple_text_similarity(text1, text2)
             
         try:
-            # Get embeddings for both texts
-            if hasattr(self.client, 'embed'):
-                # ClientV2 or newer Client versions
+            # Check if using ClientV2 or legacy Client
+            if hasattr(cohere, 'ClientV2') and isinstance(self.client, cohere.ClientV2):
+                # ClientV2 API
                 response = self.client.embed(
                     texts=[text1[:500], text2[:500]],  # Limit length
-                    model='embed-english-v3.0',  # v3 model name
-                    input_type='search_query',
+                    model='embed-english-v3.0',
+                    input_type='search_document',
                     embedding_types=['float']
                 )
                 
-                # Handle different response formats
+                # Handle ClientV2 response format
                 if hasattr(response, 'embeddings'):
                     embeddings = response.embeddings
-                    # ClientV2 format
                     if hasattr(embeddings, 'float') and len(embeddings.float) >= 2:
                         embedding1 = np.array(embeddings.float[0])
                         embedding2 = np.array(embeddings.float[1])
-                    # Legacy format
-                    elif isinstance(embeddings, list) and len(embeddings) >= 2:
-                        embedding1 = np.array(embeddings[0])
-                        embedding2 = np.array(embeddings[1])
                     else:
                         raise ValueError("Unexpected embeddings format")
                     
@@ -217,9 +212,27 @@ class CohereValidator(Tool):
                     # Normalize to 0-1 range
                     return float((cosine_sim + 1) / 2)
             else:
-                # Very old Client version without embed method
-                self.logger.warning("Embed method not available, falling back to simple similarity")
-                return self._simple_text_similarity(text1, text2)
+                # Legacy Client API
+                response = self.client.embed(
+                    texts=[text1[:500], text2[:500]],  # Limit length
+                    model='embed-english-v2.0'  # Legacy model
+                )
+                
+                # Legacy response is just a list of embeddings
+                if hasattr(response, 'embeddings') and len(response.embeddings) >= 2:
+                    embedding1 = np.array(response.embeddings[0])
+                    embedding2 = np.array(response.embeddings[1])
+                    
+                    # Calculate cosine similarity
+                    cosine_sim = np.dot(embedding1, embedding2) / (
+                        np.linalg.norm(embedding1) * np.linalg.norm(embedding2)
+                    )
+                    
+                    # Normalize to 0-1 range
+                    return float((cosine_sim + 1) / 2)
+                else:
+                    self.logger.warning("Could not get embeddings, falling back to simple similarity")
+                    return self._simple_text_similarity(text1, text2)
             
         except Exception as e:
             self.logger.error(f"Failed to calculate semantic similarity: {str(e)}")
