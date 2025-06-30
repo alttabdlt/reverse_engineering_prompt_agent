@@ -1,0 +1,61 @@
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.gitignore
+.mypy_cache
+.pytest_cache
+.hypothesis
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.db
+*.sqlite
+.env
+.env.*
+credentials/
+logs/
+htmlcov/
+evaluation_report_*.json
+
+# Documentation
+*.md
+docs/
+CLAUDE.md
+PRD_Taskmaster.md
+IMPLEMENTATION_CHOICES.md
+
+# Tests (for production image)
+tests/
+pytest.ini
+test_*.py
+
+# Development files
+*.pyc
+__pycache__/
+
+# Git
+.git/
+.gitignore
