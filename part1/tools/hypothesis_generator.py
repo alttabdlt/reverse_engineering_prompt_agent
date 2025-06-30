@@ -155,6 +155,21 @@ class GeminiHypothesisGenerator(Tool):
         
         prompt = f"""You are an expert at reverse engineering prompts from AI-generated outputs.
 
+IMPORTANT PRINCIPLES:
+1. Apply Occam's Razor - simpler prompts are MORE LIKELY than complex ones
+2. LLMs naturally add formatting (bullets, structure) without being asked
+3. Most user prompts are under 15 words
+4. Avoid assuming every output feature was explicitly requested
+5. Start with the simplest prompt that could produce this output
+
+Common simple patterns to consider FIRST:
+- "Explain [topic]"  
+- "What is [topic]?"
+- "How does [topic] work?"
+- "Write about [topic]"
+- "Describe [topic]"
+- "List [topic]"
+
 Given the following AI-generated output:
 ---
 {output_text[:500]}{'...' if len(output_text) > 500 else ''}
@@ -168,15 +183,18 @@ Analysis findings:
 
 {f"Previous attempts that were incorrect: {previous_attempts}" if previous_attempts else ""}
 
-Generate 3 different prompt hypotheses that could have produced this output. For each hypothesis, provide:
-1. The exact prompt text
+Generate 3 different prompt hypotheses that could have produced this output. 
+IMPORTANT: Start with the SIMPLEST possible prompt, then add complexity only if truly necessary.
+
+For each hypothesis, provide:
+1. The exact prompt text (keep it SHORT and SIMPLE)
 2. Confidence score (0-1)
 3. Reasoning for why this prompt is likely
 4. Key elements in the prompt
 
 Format your response as a JSON array with objects containing: prompt, confidence, reasoning, key_elements
 
-Think step by step about what instructions would lead to this specific output."""
+Remember: LLMs are helpful by default and will naturally structure responses well."""
         
         return prompt
     

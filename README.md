@@ -72,6 +72,13 @@ pip install -r requirements.txt
 ```
 
 3. **Configure credentials:**
+
+#### Option 1: Interactive Setup (Recommended)
+```bash
+python setup_credentials.py
+```
+
+#### Option 2: Manual Setup
 ```bash
 cp .env.example .env
 ```
@@ -82,6 +89,17 @@ GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 GOOGLE_CLOUD_PROJECT=your-project-id
 VERTEX_AI_LOCATION=us-central1
 COHERE_API_KEY=your-cohere-api-key
+```
+
+#### Getting Service Account Key
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Navigate to "IAM & Admin" → "Service Accounts"
+3. Create key: "Keys" → "Add Key" → "Create new key" → JSON
+4. Grant `Vertex AI User` role
+
+#### Alternative: Use JSON Content Directly
+```bash
+export GOOGLE_APPLICATION_CREDENTIALS_JSON="$(cat /path/to/service-account.json)"
 ```
 
 ## 🏃 Running the Service
@@ -102,10 +120,18 @@ Access at:
 python interactive_demo.py
 ```
 
-Try prompts like:
-- "Write a haiku about coding"
-- "List 5 benefits of exercise"
-- "Explain quantum computing to a 5-year-old"
+**How it works:**
+1. You enter a prompt (e.g., "Write a haiku about coding")
+2. Gemini generates output from your prompt
+3. ONLY the output is sent to the detective (not your prompt!)
+4. The detective tries to reverse engineer the original prompt
+5. Compare results to see accuracy
+
+**Try these prompts:**
+- Simple: "List 5 benefits of exercise"
+- Creative: "Write a haiku about the ocean"
+- Technical: "Explain recursion in simple terms"
+- Complex: "As a pirate, describe your favorite treasure in exactly 3 sentences"
 
 ### Advanced Showcase
 ```bash
@@ -113,6 +139,14 @@ python showcase_advanced.py
 ```
 
 Tests edge cases and complex scenarios.
+
+### Running Tests
+```bash
+cd part1
+pytest -v                     # Run all tests
+pytest --cov=. --cov-report=html  # With coverage
+python run_evaluation.py      # Run evaluation suite
+```
 
 ## 📁 Project Structure
 
@@ -251,6 +285,16 @@ Response:
 - **Improved error handling** and fallback mechanisms
 - **Enhanced validation** with both ClientV2 and legacy Client support
 
+## ⚠️ Known Limitations
+
+### Over-fitting in Prompt Reconstruction
+The current system tends to over-specify prompts, assuming every output characteristic was explicitly requested. For example:
+- **Actual prompt**: "Explain how backpropagation works"
+- **System reconstructs**: Complex 45-word prompt with specific constraints
+- **Result**: Low accuracy on simple prompts
+
+**Solution in development**: Implementing Occam's Razor principle with simplicity scoring. See [CLAUDE.md](CLAUDE.md#known-issues--solutions) for implementation details and improvement plan.
+
 ## 🤝 Assessment Fulfillment
 
 This project meets all technical assessment requirements:
@@ -274,6 +318,7 @@ This project meets all technical assessment requirements:
 - Conceptual answers on agent evaluation
 - Prompt engineering methodology
 - System design documentation
+- See [part3/ANSWERS.md](part3/ANSWERS.md) for detailed responses
 
 ## 📝 License
 

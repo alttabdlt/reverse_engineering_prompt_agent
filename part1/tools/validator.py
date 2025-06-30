@@ -112,7 +112,8 @@ class CohereValidator(Tool):
         match_score = self._calculate_match_score(
             semantic_similarity,
             structural_match,
-            constraint_satisfaction
+            constraint_satisfaction,
+            hypothesis.prompt
         )
         
         # Calculate confidence calibration
@@ -368,23 +369,56 @@ class CohereValidator(Tool):
         self,
         semantic_similarity: float,
         structural_match: float,
-        constraint_satisfaction: float
+        constraint_satisfaction: float,
+        prompt: str = ""
     ) -> float:
         """Calculate overall match score with weighted average"""
-        # Weights: semantic is most important
+        # Calculate simplicity score for the prompt
+        simplicity_score = self._calculate_simplicity_score(prompt) if prompt else 0.5
+        
+        # Updated weights to favor simplicity
         weights = {
-            'semantic': 0.5,
-            'structural': 0.3,
-            'constraint': 0.2
+            'semantic': 0.4,      # Reduced from 0.5
+            'simplicity': 0.3,    # NEW: Favor simple prompts
+            'structural': 0.2,    # Reduced from 0.3
+            'constraint': 0.1     # Reduced from 0.2
         }
         
         score = (
             semantic_similarity * weights['semantic'] +
+            simplicity_score * weights['simplicity'] +
             structural_match * weights['structural'] +
             constraint_satisfaction * weights['constraint']
         )
         
         return min(score, 1.0)
+    
+    def _calculate_simplicity_score(self, prompt: str) -> float:
+        """Calculate how simple/likely a prompt is"""
+        word_count = len(prompt.split())
+        
+        # Prefer shorter prompts
+        if word_count <= 5:
+            length_score = 1.0
+        elif word_count <= 10:
+            length_score = 0.8
+        elif word_count <= 20:
+            length_score = 0.6
+        elif word_count <= 40:
+            length_score = 0.4
+        else:
+            length_score = 0.2
+        
+        # Check for complexity indicators (penalize these)
+        complexity_penalty = 0
+        if re.search(r'\d+\s+words?', prompt.lower()):
+            complexity_penalty += 0.2
+        if re.search(r'exactly|precisely|specifically', prompt.lower()):
+            complexity_penalty += 0.2
+        if re.search(r'bullet|points?|format', prompt.lower()):
+            complexity_penalty += 0.1
+        
+        return max(0.1, length_score - complexity_penalty)
     
     def _calculate_confidence_calibration(
         self,
